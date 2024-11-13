@@ -1,0 +1,7 @@
+<svg id="table" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+  <path id="Path_620" data-name="Path 620" d="M15.75,1.126H2.25A1.123,1.123,0,0,0,1.126,2.251v13.5a1.123,1.123,0,0,0,1.126,1.126h13.5a1.123,1.123,0,0,0,1.126-1.124V2.25A1.123,1.123,0,0,0,15.75,1.126ZM2.25,0A2.248,2.248,0,0,0,0,2.25v13.5A2.248,2.248,0,0,0,2.25,18h13.5A2.248,2.248,0,0,0,18,15.75V2.25A2.248,2.248,0,0,0,15.75,0Z" transform="translate(0 0)" fill="#0a58ca" fill-rule="evenodd"/>
+  <rect id="Rectangle_208" data-name="Rectangle 208" width="16.548" height="1" transform="translate(0.513 3.045)" fill="#0a58ca"/>
+  <path id="Path_621" data-name="Path 621" d="M160,64.122V48h.939V64.122Zm4.7,0V48h.939V64.122Z" transform="translate(-153.818 -46.591)" fill="#0a58ca" fill-rule="evenodd"/>
+  <path id="Path_622" data-name="Path 622" d="M48.122,224.939H32V224H48.122Zm0,3.757H32v-.939H48.122Z" transform="translate(-31.061 -216.534)" fill="#0a58ca" fill-rule="evenodd"/>
+  <path id="Path_623" data-name="Path 623" d="M0,1.878A1.732,1.732,0,0,1,.658.55,2.5,2.5,0,0,1,2.25,0h13.5a2.5,2.5,0,0,1,1.592.55A1.732,1.732,0,0,1,18,1.878V3.757H0Z" transform="translate(0 0)" fill="#0a58ca"/>
+</svg>

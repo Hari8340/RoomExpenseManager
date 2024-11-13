@@ -1,0 +1,120 @@
+﻿@model List<RoomExpenseManagerWebApp.Models.ExpenseViewModel>
+<head>
+   @*  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"> *@
+
+</head>
+<!-- Filter Form -->
+<div style="display: flex; justify-content: center; margin-top: 20px;">
+    <form method="get" action="Dashboard" style="display: flex; gap: 20px; align-items: center;">
+        <div>
+            <label for="yearSelect" style="font-weight: bold;">Select Year:</label>
+            <select id="yearSelect" name="year" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+                <option value="">All</option>
+                @foreach (var year in Enumerable.Range(DateTime.Now.Year - 4, 5))
+                {
+                    <option value="@year">@year</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <label for="monthSelect" style="font-weight: bold;">Select Month:</label>
+            <select id="monthSelect" name="month" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+
+                <option value="">All</option>
+                @foreach (var month in Enumerable.Range(1, 12))
+                {
+                    <option value="@month">@(new DateTime(1, month, 1).ToString("MMMM"))</option>
+                        }
+            </select>
+        </div>
+
+        <button type="submit" style="
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;">
+            Filter
+        </button>
+    </form>
+</div>
+
+<!-- Table Section -->
+@* <table style="width: 80%; margin: 30px auto; border-collapse: collapse; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <thead style="background-color: #f2f2f2;">
+        <tr>
+            <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">User Name</th>
+            <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Total Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var expense in Model)
+        {
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">@expense.UserName</td>
+                <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">@expense.Amount</td>
+            </tr>
+        }
+    </tbody>
+</table> *@
+
+<!-- Chart Section -->
+<div class="container" style="width: 80%; margin: 30px auto;">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">Expenses Overview</h4>
+        </div>
+        <div class="card-body">
+            <canvas id="expensesChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+        const chartData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model));
+        const ctx = document.getElementById('expensesChart').getContext('2d');
+
+        const userNames = chartData.map(item => item.UserName);
+        const totalAmounts = chartData.map(item => item.Amount);
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: userNames,
+                datasets: [{
+                    label: 'Total Expense',
+                    data: totalAmounts,
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true }
+                },
+                plugins: {
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'end',
+                        formatter: (value) => value.toFixed(2), // Format the value to two decimal places
+                        color: 'black', // Customize the color of the labels
+                        font: {
+                            weight: 'bold'
+                        }
+                    }
+                }
+            },
+            plugins: [ChartDataLabels] // Add the plugin here
+        });
+    });
+</script>
+
+

@@ -1,0 +1,104 @@
+﻿@model RoomExpenseManagerWebApp.Models.Login
+
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">User Login</h3>
+                </div>
+                <div class="card-body">
+                    <form id="loginForm" method="post" novalidate>
+                        <div id="errorMessage" class="text-danger mb-3"></div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Id" class="form-label">User ID</label>
+                            <input asp-for="Id" class="form-control" />
+                            <span asp-validation-for="Id" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Password" class="form-label">Password</label>
+                            <input asp-for="Password" type="password" class="form-control" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                    </form>
+                </div>
+               
+            </div>
+        </div>
+    </div>
+</div>
+
+
+ <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#loginForm').on('submit', function (event) {
+                event.preventDefault(); // Prevent the form from submitting traditionally
+
+                const userId = $('input[name="Id"]').val();
+                const password = $('input[name="Password"]').val();
+                const userIdPattern = /^RUSER\d+$/;
+
+                let errorMessage = "";
+
+                // Client-side validation
+                if (!userId) {
+                    errorMessage += "User ID is required.<br/>";
+                } else if (userId.length <= 4 || !userIdPattern.test(userId)) {
+                    errorMessage += "User ID must be greater than 4 characters and follow the pattern RUSER + digit.<br/>";
+                }
+
+                if (!password) {
+                    errorMessage += "Password is required.<br/>";
+                } else if (
+                    password.length < 8 ||
+                    !/[A-Z]/.test(password) ||
+                    !/[a-z]/.test(password) ||
+                    !/\d/.test(password) ||
+                    !/[^A-Za-z0-9]/.test(password)
+                ) {
+                    errorMessage += "Password must contain at least 8 characters, with an uppercase, lowercase, digit, and special character.<br/>";
+                }
+
+                if (errorMessage) {
+                    $('#errorMessage').html(errorMessage);
+                    return;
+                }
+
+                // AJAX call to the server
+                $.ajax({
+                    url: '@Url.Action("Login", "Login")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ Id: userId, Password: password }),
+                beforeSend: function () {
+                    showLoader() // Show loader before sending request
+                },
+                    success: function (response) {
+                        if (response.isSuccess) {
+                            window.location.href = '/Expense/Dashboard'; // Redirect on success
+                        } else {
+                            $('#errorMessage').html(response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        const error = xhr.responseJSON?.message || "An unexpected error occurred.";
+                        $('#errorMessage').html(error);
+                    },
+                complete: function () {
+                    hideLoader(); // Hide loader when request completes
+                }
+                });
+            });
+        });
+    </script>
+

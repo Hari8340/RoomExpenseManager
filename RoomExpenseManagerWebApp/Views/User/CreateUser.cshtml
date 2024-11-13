@@ -1,0 +1,174 @@
+﻿@model RoomExpenseManagerWebApp.Models.UserRequest
+
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4>Create User</h4>
+        </div>
+        <div class="card-body">
+            <form id="userForm" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="row">
+                    @* <div class="form-group mb-3 col-md-6">
+                        <label asp-for="UserId" class="control-label"></label>
+                        <input asp-for="UserId"  type="number" class="form-control" name="UserId" required />
+                        <span class="text-danger" id="userIdError"></span>
+                    </div> *@
+
+                    <div class="form-group mb-3 col-md-6">
+                        <label asp-for="Name" class="control-label"></label>
+                        <input asp-for="Name" id="name" class="form-control" name="Name" required />
+                        <span class="text-danger" id="nameError"></span>
+                    </div>
+                    <div class="form-group mb-3 col-md-6">
+                        <label asp-for="DOB" class="control-label"></label>
+                        <input asp-for="DOB" type="date" class="form-control" name="DOB" required />
+                        <span class="text-danger" id="dobError"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                   
+
+                    <div class="form-group mb-3 col-md-6">
+                        <label asp-for="Image" class="control-label"></label>
+                        <input asp-for="Image" type="file" class="form-control" name="Image" id="image" required />
+                        <span class="text-danger" id="imageError"></span>
+                    </div>
+                    <div class="form-group mb-3 col-md-6">
+                        <label asp-for="AadharPdf" class="control-label"></label>
+                        <input asp-for="AadharPdf"
+                               type="file"
+                               class="form-control"
+                               name="AadharPdf"
+                               id="aadhar"
+                               accept="application/pdf"
+                               required />
+                        <span class="text-danger" id="aadharError"></span>
+                    </div>
+                </div>
+
+                
+
+                <div class="form-group d-grid">
+                    <button type="button" class="btn btn-primary" id="submitBtn">Create</button>
+                </div>
+            </form>
+        </div>
+        <div class="card-footer text-end">
+            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        </div>
+    </div>
+</div>
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#submitBtn').click(function (e) {
+                e.preventDefault();  // Prevent form from submitting normally
+                clearErrors();  // Clear previous error messages
+
+            if (validateForm()) {
+                let userRequest = new FormData($('#userForm')[0]);  // Collect all form data
+                createUser(userRequest);
+
+                    
+                }
+            });
+
+            function clearErrors() {
+                $('#userIdError, #nameError, #dobError, #imageError, #aadharError').text('');
+            }
+        async function createUser(userRequest) {
+            try {
+                const response = await $.ajax({
+                    url: '/User/CreateUser',
+                    type: 'POST',
+                    data: userRequest,
+                    processData: false,
+                    contentType: false
+                   
+                });
+
+                alert('User created successfully!');
+                window.location.href = '/User/Index';
+            } catch (error) {
+                alert('Error creating user!');
+                console.error(error);
+            }
+        }
+
+        // Call the function where needed
+
+
+        function validateForm() {
+            let isValid = true;
+
+            // Get input values
+            let name = $('[name="Name"]').val().trim();
+            let dobValue = $('[name="DOB"]').val();
+            let dob = dobValue ? new Date(dobValue) : null;
+            let userAge = dob ? getAge(dob) : null;
+            let image = $('#image')[0].files[0];
+            let aadhar = $('#aadhar')[0].files[0];
+
+            // Reset error messages
+            $('.error').text('');
+
+            // Name validation
+            if (name.length < 3) {
+                $('#nameError').text('Name must be at least 3 characters.');
+                isValid = false;
+            }
+
+            // DOB validation
+            if (!dobValue) {
+                $('#dobError').text('Date of Birth is required.');
+                isValid = false;
+            } else if (userAge < 18) {
+                $('#dobError').text('User must be at least 18 years old.');
+                isValid = false;
+            }
+
+            // Image validation
+            if (!image) {
+                $('#imageError').text('Image is required.');
+                isValid = false;
+            } else {
+                const validImageTypes = ['image/jpeg', 'image/png'];
+                if (!validImageTypes.includes(image.type)) {
+                    $('#imageError').text('Image must be JPEG or PNG.');
+                    isValid = false;
+                } else if (image.size > 3 * 1024 * 1024) {
+                    $('#imageError').text('Image must be less than 3 MB.');
+                    isValid = false;
+                }
+            }
+
+            // Aadhar validation
+            if (!aadhar) {
+                $('#aadharError').text('Aadhar is required.');
+                isValid = false;
+            } else {
+                if (aadhar.type !== 'application/pdf') {
+                    $('#aadharError').text('Aadhar must be a PDF.');
+                    isValid = false;
+                } else if (aadhar.size > 5 * 1024 * 1024) {
+                    $('#aadharError').text('Aadhar must be less than 5 MB.');
+                    isValid = false;
+                }
+            }
+
+            return isValid;
+        }
+
+            function getAge(dob) {
+                let diff = Date.now() - dob.getTime();
+                let ageDate = new Date(diff);
+                return Math.abs(ageDate.getUTCFullYear() - 1970);
+            }
+        });
+    </script>
+

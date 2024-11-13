@@ -1,0 +1,317 @@
+﻿@using System.Globalization
+@using RoomExpenseManagerWebApp.Models
+
+@model IEnumerable<RoomExpenseManagerWebApp.Models.ExpenseResponse>
+
+@{
+    ViewData["Title"] = "MyExpenses";
+}
+
+<head>
+    <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet" />
+    
+</head>
+
+<h1 class="text-center my-4">My Expenses</h1>
+
+<!-- Filter Section -->
+<div class="container mb-4">
+    <div class="row">
+        <div class="col-md-4">
+            <label for="filterYear" class="form-label">Year</label>
+            <select id="filterYear" class="form-select">
+                <option value="">Select Year</option>
+                @for (int year = DateTime.Now.Year; year >= DateTime.Now.Year - 10; year--)
+                {
+                    <option value="@year">@year</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="filterMonth" class="form-label">Month</label>
+            <select id="filterMonth" class="form-select">
+                <option value="">Select Month</option>
+                @for (int month = 1; month <= 12; month++)
+                {
+                    <option value="@month">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month)</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4 align-self-end d-flex">
+            <button id="filterBtn" class="btn btn-primary me-2">Filter</button>
+            <a asp-action="CreateExpense" class="btn btn-success">Create New</a>
+        </div>
+    </div>
+</div>
+
+
+<!-- Table Section -->
+<div class="container table-responsive">
+    <table id="expensesTable" class="display table table-striped table-bordered" style="width:100%">
+        <thead class="table-dark">
+            <tr>
+                <th>Expense ID</th>
+                <th>Item</th>
+                <th>Amount</th>
+                <th>Description</th>
+                <th>Created Date</th>
+                <th>User ID</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.ExpenseId</td>
+                    <td>@item.Item</td>
+                    <td class="amount">@item.Amount</td>
+                    <td>@item.Description</td>
+                    <td>@item.CreatedDate.ToString("yyyy-MM-dd")</td>
+                    <td>@item.UserId</td>
+                    <td>
+                        <a href="javascript:void(0);" class="text-primary" title="Edit" onclick="openEditModal(@item.ExpenseId)">
+                            <i class="fas fa-edit"></i> Edit
+                        </a> |
+                        <a href="javascript:void(0);" class="text-danger delete-link"
+                           data-url="@Url.Action("DeleteExpense", new { id = item.ExpenseId })" title="Delete">
+                            <i class="fas fa-trash-alt"></i> Delete
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+        <tfoot class="table-dark">
+            <tr>
+                <td colspan="2" class="text-end"><strong>Total Amount (Filtered):</strong></td>
+                <td id="totalAmount">0.00</td>
+                <td colspan="4"></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<!-- Modal (same as before) -->
+<div class="modal fade" id="editExpenseModal" tabindex="-1"
+     aria-labelledby="editExpenseModalLabel" aria-hidden="true"
+     data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editExpenseModalLabel">Edit Expense</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editExpenseForm">
+                    <input type="hidden" id="ExpenseId" />
+                    <div class="mb-3">
+                        <label for="Item" class="form-label">Item</label>
+                        <input type="text" class="form-control" id="Item" required />
+                        <div class="invalid-feedback" id="itemError" style="display: none;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="Amount" class="form-label">Amount</label>
+                        <input type="number" class="form-control" id="Amount" min="1" required />
+                        <div class="invalid-feedback" id="amountError" style="display: none;"></div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="CreatedDate" class="control-label">Purchased Date</label>
+                        <input type="date" class="form-control" id="CreatedDate" name="CreatedDate"
+                                required style="width: 100%;" />
+                        <div class="invalid-feedback" id="dateError" style="display: none;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="Description" class="form-label">Description</label>
+                        <textarea class="form-control" id="Description" rows="3" required></textarea>
+                        <div class="invalid-feedback" id="descriptionError" style="display: none;"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveChangesBtn">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        var table = $('#expensesTable').DataTable({
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+            lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+            pageLength: 5,
+            footerCallback: function (row, data, start, end, display) {
+                var api = this.api();
+
+                // Helper function to parse numbers safely
+                var parseNumber = function (val) {
+                    return typeof val === 'string' ?
+                        parseFloat(val.replace(/[^0-9.-]+/g, '')) :
+                        typeof val === 'number' ? val : 0;
+                };
+
+                // Calculate total for visible rows
+                var total = api
+                    .column(2, { search: 'applied' }) // Index 2 is "Amount"
+                    .data()
+                    .reduce(function (a, b) {
+                        return parseNumber(a) + parseNumber(b);
+                    }, 0);
+
+                // Update footer total
+                $('#totalAmount').html(total.toFixed(2)); // Display total with 2 decimal places
+            }
+        });
+
+
+        // Filter Button Click Event
+        $('#filterBtn').click(function () {
+            const year = $('#filterYear').val();
+            const month = $('#filterMonth').val();
+
+            // Build a filter string for DataTables search
+            var filter = '';
+
+            if (year) {
+                filter += year; // Include year if selected
+            }
+
+            if (month) {
+                filter += '-' + month.padStart(2, '0'); // Format month as MM
+            }
+
+            // Add extra hyphen if only the month is provided (i.e., year is empty)
+            if (!year && month) {
+                filter += '-'; // Add extra hyphen at the end for month-only search
+            }
+
+            // Apply the search filter to the table
+            table.column(4).search(filter).draw(); // Index 4 is "CreatedDate"
+        });
+
+    });
+    function openEditModal(expenseId) {
+        const today = new Date().toISOString().split('T')[0];
+        $.ajax({
+            url: '@Url.Action("GetExpense", "Expense")',
+            type: 'GET',
+            data: { id: expenseId },
+            success: function (data) {
+                $('#ExpenseId').val(data.expenseId);
+                $('#Item').val(data.item);
+                $('#Amount').val(data.amount);
+                $('#CreatedDate').val(data.createdDate.split('T')[0]);
+                $('#CreatedDate').attr('max', today);
+                $('#Description').val(data.description);
+                $('#editExpenseModal').modal('show');
+            },
+            error: function () {
+                alert('Failed to load expense details.');
+            }
+        });
+    }
+
+    $(document).on('click', '.delete-link', function (e) {
+        showLoader();
+        e.preventDefault();
+        const url = $(this).data('url');
+
+        if (confirm('Are you sure you want to delete this expense?')) {
+            $.ajax({
+                url: url,
+                type: 'DELETE',
+                success: function (result) {
+                    if (result) location.reload();
+                    else alert('Failed to delete the expense.');
+                },
+                error: function () {
+                    alert('Error while deleting the expense.');
+                }
+            });
+        }
+        hideLoader();
+    });
+
+    $('#saveChangesBtn').click(function () {
+        showLoader();
+        const expenseId = $('#ExpenseId').val();
+        const item = $('#Item').val().trim();
+        const amount = parseFloat($('#Amount').val());
+        const description = $('#Description').val().trim();
+        const createdDate = $('#CreatedDate').val().trim();
+
+        // Clear previous error messages
+        $('#itemError').hide().text('');
+        $('#amountError').hide().text('');
+        $('#dateError').hide().text('');
+        $('#descriptionError').hide().text('');
+
+
+        // Validation Logic
+        let hasErrors = false;
+
+        if (!item || item.length < 2) {
+            $('#itemError').text("Item must be at least 2 characters long.").show();
+            hasErrors = true;
+        }
+
+        if (!description || description.length < 3) {
+            $('#descriptionError').text("Description must be at least 3 characters long.").show();
+            hasErrors = true;
+        }
+        // Date validation
+        if (!createdDate) {
+            $('#dateError').text("Date is required.").show();
+            hasErrors = true;
+        } else {
+            const today = new Date().toISOString().split('T')[0];
+            if (createdDate > today) {
+                $('#dateError').text("Date cannot be in the future.").show();
+                hasErrors = true;
+            }
+        }
+
+        if (isNaN(amount) || amount <= 0) {
+            $('#amountError').text("Amount must be greater than 0.").show();
+            hasErrors = true;
+        }
+
+        // If there are validation errors, return
+        if (hasErrors) {
+            return;
+        }
+
+        // Proceed with AJAX call if validation is successful
+        $.ajax({
+            url: '@Url.Action("EditExpense", "Expense")' + '?id=' + encodeURIComponent(expenseId),
+            type: 'PUT',
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            data: {
+                Item: item,
+                Amount: amount,
+                Description: description,
+                createdDate:createdDate
+
+            },
+            success: function () {
+                $('#editExpenseModal').modal('hide');
+                location.reload(); // Refresh page to see updated data
+            },
+            error: function () {
+                alert('Failed to save changes.');
+            }
+        });
+        hideLoader();
+    });
+
+
+</script>

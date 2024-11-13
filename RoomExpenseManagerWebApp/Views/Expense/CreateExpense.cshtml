@@ -1,0 +1,126 @@
+﻿@model RoomExpenseManagerWebApp.Models.Expense
+@{
+    var currentYear = DateTime.Now.Year;
+    var startOfYear = new DateTime(currentYear, 1, 1).ToString("yyyy-MM-dd");
+    var today = DateTime.Now.ToString("yyyy-MM-dd");
+}
+<div class="container mt-3" style="max-width: 400px;">
+    <!-- Set a maximum width for the container -->
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4>Create Expense</h4>
+        </div>
+        <div class="card-body">
+            <form id="expenseForm">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Item" class="control-label"></label>
+                    <input asp-for="Item" class="form-control" name="Item" required style="width: 100%;" /> <!-- 100% width -->
+                    <span class="text-danger" id="itemError"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Description" class="control-label"></label>
+                    <textarea asp-for="Description" class="form-control" name="Description" required style="width: 100%;"></textarea> <!-- 100% width -->
+                    <span class="text-danger" id="descriptionError"></span>
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="CreatedDate" class="control-label"></label>
+                    <input asp-for="CreatedDate" type="date" class="form-control" name="CreatedDate"
+                           min="@startOfYear" max="@today" value="@today" required style="width: 100%;" />
+                    <span class="text-danger" id="dateError"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Amount" class="control-label"></label>
+                    <input asp-for="Amount" type="number" class="form-control" name="Amount" min="1" required style="width: 100%;" /> <!-- 100% width -->
+                    <span class="text-danger" id="amountError"></span>
+                </div>
+
+                <div class="form-group d-grid">
+                    <button type="button" class="btn btn-primary" id="submitExpenseBtn">Create</button>
+                </div>
+            </form>
+        </div>
+        <div class="card-footer text-end">
+            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        </div>
+    </div>
+</div>
+
+
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#submitExpenseBtn').click(function (e) {
+                showLoader();
+                e.preventDefault();  // Prevent form from submitting normally
+                clearErrors();  // Clear previous error messages
+
+                if (validateForm()) {
+                    let expenseRequest = $('#expenseForm').serialize();  // Collect all form data
+                    createExpense(expenseRequest);
+                }
+                hideLoader();
+            });
+
+            function clearErrors() {
+                $('#itemError, #descriptionError, #amountError').text('');
+            }
+
+            async function createExpense(expenseRequest) {
+               
+                try {
+                    const response = await $.ajax({
+                        url: '/Expense/CreateExpense',  // Update with your actual endpoint
+                        type: 'POST',
+                        data: expenseRequest
+                    });
+
+                    alert('Expense created successfully!');
+                    window.location.href = '/Expense/MyExpenses';  // Redirect to the index page
+                } catch (error) {
+                    alert('Error creating expense!');
+                    console.error(error);
+                }
+            }
+
+            function validateForm() {
+                let isValid = true;
+                let item = $('[name="Item"]').val();
+                let description = $('[name="Description"]').val();
+                let createdDate = $('[name="CreatedDate"]').val();
+                let amount = $('[name="Amount"]').val();
+                if (item=="") {
+                   $('#itemError').text('Item name is required.');
+                   isValid = false;
+                }
+                else if (item.length < 4) {
+                    $('#itemError').text('Item name must be at least 4 characters.');
+                    isValid = false;
+                }
+                if (description==""){
+                   $('#descriptionError').text('Description field is required.');
+                }
+                else if (description.length < 3) {
+                    $('#descriptionError').text('Description must be at least 3 characters.');
+                    isValid = false;
+                }
+                if (createdDate=="") {
+                    $('#dateError').text('Date field is required');
+                    isValid = false;
+                }
+
+                if (!amount || amount < 1) {
+                    $('#amountError').text('Amount must be greater than or equal to 1.');
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+        });
+    </script>
+

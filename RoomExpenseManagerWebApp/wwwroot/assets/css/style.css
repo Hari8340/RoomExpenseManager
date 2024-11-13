@@ -1,0 +1,65 @@
+.slick-slider .element{
+  color:#000000;
+  border-radius:5px;
+  display:inline-block;
+  margin:0px 10px;
+  justify-content:center;
+  align-items:center;
+  font-size:16px;
+}
+.slick-slider .slick-disabled {
+  opacity : 0; 
+  pointer-events:none;
+}
+.slick-prev,
+  .slick-next {
+    background: #ffffff;
+    color: transparent;
+    width: 30px;
+    height: 30px;
+    box-shadow: 0px 3px 6px #00000029;
+    border-radius: 30px;
+    border: 1px solid#ccc;
+    margin-top: 2px;
+  }
+
+
+    .slick-prev:before {
+        left: 3px;
+        content: url('../images/left arrow.png');
+        color: black;
+        position: absolute;
+        top: 2px;
+    }
+    .slick-next:after {
+        left: 3px;
+        content: url('../images/right arrow.png');
+       
+        color: black;
+        position: absolute;
+        top: 2px;
+    }
+  .slick-prev{
+    position: absolute;
+    left: 0px;
+    top: 1px;
+    z-index: 999;
+  }
+  .slick-next{
+    position: absolute;
+    right: 0px;
+    top: 1px;
+    z-index: 999;
+  }
+.slick-slider .element {
+    position: absolute;
+}
+
+    .slick-slider .element:first-child {
+        position: relative;
+    }
+
+.slick-initialized.slick-slider .element,
+.slick-initialized.slick-slider .element:first-child {
+    position: relative;
+}

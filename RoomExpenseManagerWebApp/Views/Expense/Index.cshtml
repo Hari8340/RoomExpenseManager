@@ -1,0 +1,122 @@
+﻿@model IEnumerable<RoomExpenseManagerWebApp.Models.ExpenseViewModel>
+
+@{
+    ViewData["Title"] = "Index";
+}
+<head>
+    <link href="~/assets/fonts/font-awesome.min.css" rel="stylesheet" type="text/css" />
+    <link href="~/assets/fonts/ionicons.css" rel="stylesheet" type="text/css" />
+    <link href="~/assets/fonts/linearicons.css" rel="stylesheet" type="text/css" />
+    <link href="~/assets/fonts/feather.css" rel="stylesheet" type="text/css" />
+</head>
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Expense List</h2>
+
+    <!-- Filters: Year and Month -->
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label for="yearFilter" class="form-label">Year</label>
+            <select id="yearFilter" class="form-select">
+                <option value="">Select Year</option>
+                @for (int year = DateTime.Now.Year; year >= DateTime.Now.Year - 10; year--)
+                {
+                    <option value="@year">@year</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="monthFilter" class="form-label">Month</label>
+            <select id="monthFilter" class="form-select">
+                <option value="">Select Month</option>
+                @for (int month = 1; month <= 12; month++)
+                {
+                    <option value="@month">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month)</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4 align-self-end">
+            <button id="filterButton" class="btn btn-primary w-100">Filter</button>
+        </div>
+    </div>
+
+    <!-- Expense Table -->
+    <table id="expenseTable" class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Expense ID</th>
+                <th>User Name</th>
+                <th>Item</th>
+                <th>Amount</th>
+                <th>Description</th>
+                <th>Created Date</th>
+               
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.ExpenseId</td>
+                    <td>@item.UserName</td>
+                    <td>@item.Item</td>
+                    <td class="amount">@item.Amount</td>
+                    <td>@item.Description</td>
+                    <td>@item.CreatedDate.ToString("yyyy-MM-dd")</td>
+                    
+                </tr>
+            }
+        </tbody>
+        <tfoot class="table-dark">
+            <tr>
+                <th colspan="3" class="text-end">Total:</th>
+                <th id="totalAmount">0.00</th>
+                <th colspan="2"></th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        // Initialize DataTable
+        var table = $('#expenseTable').DataTable({
+            paging: true,
+            searching: true,
+            ordering: true,
+            lengthChange: true,
+            pageLength: 5,
+            lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+            footerCallback: function (row, data, start, end, display) {
+                var api = this.api();
+
+                // Calculate total for visible rows
+                var total = api
+                    .column(3, { search: 'applied' }) // Index 3 is "Amount"
+                    .data()
+                    .reduce(function (a, b) {
+                        return parseFloat(a) + parseFloat(b);
+                    }, 0);
+
+                $('#totalAmount').html(total.toFixed(2)); // Update footer total
+            }
+        });
+
+        // Filter button click event
+        $('#filterButton').on('click', function () {
+            var year = $('#yearFilter').val();
+            var month = $('#monthFilter').val();
+
+            // Build a filter string for DataTables search
+            var filter = '';
+
+            if (year) filter += year;
+            if (month) filter += '-' + month.padStart(2, '0'); // Format month as MM
+
+            // Apply the search filter to the table
+            table.column(5).search(filter).draw(); // Index 4 is "CreatedDate"
+        });
+    });
+</script>
+
