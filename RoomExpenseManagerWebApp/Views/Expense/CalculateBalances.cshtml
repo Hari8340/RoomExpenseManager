@@ -1,0 +1,92 @@
+﻿@model List<UserBalance>
+@{
+    var userNames = ViewBag.UserNames as Dictionary<int, string>;
+
+    // Calculate total sum of TotalAmount across all users if Model is not null or empty
+    var totalAmountSum = Model?.Sum(b => b.TotalAmount) ?? 0;
+    var overallAverage = Model != null && Model.Count > 0 ? totalAmountSum / Model.Count : 0;
+}
+
+<div class="container mt-4">
+    <!-- Date Range Form -->
+    <form asp-action="CalculateBalances" method="get" class="form-inline mb-3">
+        <div class="form-group col-sm-3">
+            <label for="startDate" class="mr-2">Start Date:</label>
+            <input type="date" id="startDate" name="startDate" class="form-control form-control-sm" />
+        
+            <label for="endDate" class="mr-2">End Date:</label>
+            <input type="date" id="endDate" name="endDate" class="form-control form-control-sm" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Calculate</button>
+    </form>
+
+
+    <!-- Display Settlements Table only if StartDate and EndDate are provided -->
+    @if (ViewBag.StartDate != null && ViewBag.EndDate != null && Model != null && Model.Any())
+    {
+        <h3>
+            Showing Expense Settlements from
+            @ViewBag.StartDate.ToString("yyyy-MM-dd")
+            to
+            @ViewBag.EndDate.ToString("yyyy-MM-dd")
+        </h3>
+
+        <table class="table table-bordered table-hover table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>User Name</th>
+                    <th>Total Amount</th>
+                    <th>Average Amount</th>
+                    <th>Balance</th>
+                    <th>Settlements</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var balance in Model)
+                {
+                    <tr>
+                        <td>@userNames[balance.UserId]</td>
+                        <td>@balance.TotalAmount.ToString("C")</td>
+                        <td>@overallAverage.ToString("C")</td>
+                        <td>
+                            @if (balance.Balance <= 0)
+                            {
+                                <span class="text-danger">-@Math.Abs(balance.TotalAmount - overallAverage).ToString("C")</span>
+                            }
+                            else
+                            {
+                                <span class="text-success">+@balance.Balance.ToString("C")</span>
+                            }
+                        </td>
+                        <td>
+                            @if (balance.Settlements.Any())
+                            {
+                                <ul class="list-unstyled">
+                                    @foreach (var settlement in balance.Settlements)
+                                    {
+                                        <li>
+                                            <strong>@userNames[settlement.FromUserId]</strong> needs to pay
+                                            <strong>@userNames[settlement.ToUserId]</strong>:
+                                            <span class="text-success">@settlement.Amount.ToString("C")</span>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <span class="text-muted">No settlements required</span>
+                            }
+                        </td>
+                    </tr>
+                }
+
+                <!-- Total row -->
+                <tr>
+                    <td colspan="1"><strong>Total:</strong></td>
+                    <td colspan="4"><strong>@totalAmountSum.ToString("C")</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+    }
+</div>

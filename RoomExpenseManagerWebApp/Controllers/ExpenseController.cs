@@ -72,7 +72,82 @@ namespace RoomExpenseManagerWebApp.Controllers
             }
         }
 
+        public async Task<ActionResult<List<UserBalance>>> CalculateBalances(DateTime startDate, DateTime endDate)
+        {
+            var expenses = await _expense.GetAllExpenseAsync();
+            var userNames = new Dictionary<int, string>
+                {
+                    { 1, "Harish" },
+                    { 2, "Mahesh" },
+                    { 3, "Ranjith" },
+                    { 4, "Sairam" },
+                    { 5, "Santhosh" }
+                };
+            ViewBag.StartDate = startDate;
+            ViewBag.EndDate = endDate;
+            ViewBag.UserNames = userNames;
+            var filteredExpenses = expenses
+                .Where(exp => exp.CreatedDate >= startDate && exp.CreatedDate <= endDate)
+                .ToList();
 
+            var userTotals = filteredExpenses
+                .GroupBy(exp => exp.UserId)
+                .Select(group => new
+                {
+                    UserId = group.Key,
+                    TotalAmount = group.Sum(exp => exp.Amount)
+                })
+                .ToList();
+
+            var totalAmount = userTotals.Sum(x => x.TotalAmount);
+            var userCount = userTotals.Count;
+            var averageAmount = userCount > 0 ? totalAmount / userCount : 0;
+
+            var balances = userTotals
+                .Select(user => new UserBalance
+                {
+                    UserId = user.UserId,
+                    TotalAmount = user.TotalAmount,
+                    Balance = user.TotalAmount - averageAmount
+                })
+                .ToList();
+
+            CalculateSettlements(balances);
+            return View(balances);
+        }
+
+        private void CalculateSettlements(List<UserBalance> balances)
+        {
+            var toReceive = balances.Where(b => b.Balance > 0).ToList();
+            var toPay = balances.Where(b => b.Balance < 0).ToList();
+
+            foreach (var receiver in toReceive)
+            {
+                decimal amountOwed = receiver.Balance;
+
+                foreach (var payer in toPay.Where(p => p.Balance < 0))
+                {
+                    if (amountOwed <= 0) break;
+
+                    decimal amountToPay = Math.Min(Math.Abs(payer.Balance), amountOwed);
+
+                    if (amountToPay > 0)
+                    {
+                        receiver.Settlements.Add(new Settlement
+                        {
+                            FromUserId = payer.UserId,
+                            ToUserId = receiver.UserId,
+                            Amount = amountToPay
+                        });
+
+                        payer.Balance += amountToPay; // Deduct from payer's debt
+                        amountOwed -= amountToPay;    // Deduct from receiver's balance
+                    }
+                }
+
+                receiver.Balance -= amountOwed; // Remaining balance (should be zero if fully settled)
+            }
+        }
 
 
         public async Task<IActionResult> Index()
